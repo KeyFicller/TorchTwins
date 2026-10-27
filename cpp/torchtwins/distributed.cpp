@@ -6,17 +6,17 @@
 #include <torch/csrc/distributed/c10d/FileStore.hpp>
 #include <torch/csrc/distributed/c10d/ProcessGroupGloo.hpp>
 
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
-#include <fcntl.h>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <vector>
 
 namespace torchtwins {
@@ -52,7 +52,6 @@ void report_train(const std::vector<double>& losses, const torch::Tensor& weight
 }
 
 std::string self_exe() { return std::filesystem::canonical("/proc/self/exe").string(); }
-
 
 class StdoutSilence {
  public:
@@ -186,8 +185,7 @@ std::pair<torch::Tensor, torch::Tensor> shard(const torch::Tensor& x, const torc
   const auto n = x.size(0) / world_size;
   const auto start = rank * n;
   const auto end = start + n;
-  return {x.slice(/*dim=*/0, start, end).contiguous(),
-          y.slice(/*dim=*/0, start, end).contiguous()};
+  return {x.slice(/*dim=*/0, start, end).contiguous(), y.slice(/*dim=*/0, start, end).contiguous()};
 }
 
 // @twin allreduce_avg_
