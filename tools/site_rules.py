@@ -300,4 +300,23 @@ RULES: tuple[ApiRule, ...] = (
         r"torch::stack\(",
         "教学版 all-reduce：torch::stack 再 .sum(0)；真分布式会走 ProcessGroupGloo::allreduce",
     ),
+    # --- pipeline parallel ---
+    _rule(
+        "chunk_pp",
+        "py",
+        r"\.chunk\(",
+        "按 batch 维切 micro-batch；C++ 同名，结果拷进 vector",
+    ),
+    _rule(
+        "chunk_pp",
+        "cpp",
+        r"\.chunk\(",
+        "torch::Tensor::chunk；结果拷进 std::vector<Tensor>",
+    ),
+    _rule(
+        "format_event",
+        "cpp",
+        r'std::format\("F mb',
+        "1F1B 事件名；Python 用 f-string 生成相同文本",
+    ),
 )
