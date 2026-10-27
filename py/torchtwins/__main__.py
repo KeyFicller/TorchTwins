@@ -20,6 +20,7 @@ from torchtwins.distributed import run_distributed
 from torchtwins.finetune import run_finetune
 from torchtwins.gpt import run_gpt
 from torchtwins.modules import run_modules
+from torchtwins.pipeline_parallel import run_pipeline_parallel
 from torchtwins.remap import run_remap
 from torchtwins.tensor_parallel import run_tensor_parallel
 from torchtwins.tensors import run_tensors
@@ -40,6 +41,7 @@ LESSONS: dict[str, tuple[str, Callable[[Preset], None]]] = {
     "remap": ("10 HF/OpenAI GPT-2 key remap (Conv1D, c_attn)", run_remap),
     "distributed": ("11 gloo DDP vs manual allreduce grads", run_distributed),
     "tensor_parallel": ("12 column/row-parallel Linear shard math", run_tensor_parallel),
+    "pipeline_parallel": ("13 stage split + micro-batch activation handoff", run_pipeline_parallel),
 }
 
 

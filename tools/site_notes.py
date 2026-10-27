@@ -25,6 +25,7 @@ LESSON_TITLES: dict[str, tuple[str, str]] = {
     "remap": ("10", "HF/OpenAI：Conv1D、c_attn、绑定 lm_head、键/形/dtype 审计"),
     "distributed": ("11", "分布式：gloo 进程组、DDP 与手写 allreduce"),
     "tensor_parallel": ("12", "张量并行：列/行并行 Linear 分片数学"),
+    "pipeline_parallel": ("13", "流水线并行：阶段切分与 micro-batch 激活交接"),
 }
 
 NOTES: dict[str, str] = {
@@ -77,6 +78,10 @@ NOTES: dict[str, str] = {
     "tensor_parallel.all_gather_cat": "集合通信的教学替身：<code>torch.cat</code> ↔ <code>torch::cat</code>。",
     "tensor_parallel.all_reduce_sum": "集合通信的教学替身：<code>stack</code> 再 <code>sum</code>。",
     "tensor_parallel.tp_mlp": "列并行升维 → GELU → 行并行降维，对齐 dense MLP。",
+    "pipeline_parallel.run_pipeline_parallel": "单进程演示流水线：把 4 层 Linear→GELU 切成 2 个 stage，用 identity send/recv 模拟 P2P 激活交接；再按 micro-batch 跑一遍，对齐 dense 前向。1F1B 只打印事件标签（教学时间表），数值 parity 看 forward。",
+    "pipeline_parallel.pipeline_forward": "stage0 → send/recv → stage1。真分布式会走 ProcessGroup send/recv；本课是 identity，保证与 dense 位级对齐。",
+    "pipeline_parallel.pipeline_microbatch_forward": "batch 维 chunk 成 micro-batch，逐个过 pipeline 再 cat 回去——GPipe 前向的教学版。",
+    "pipeline_parallel.schedule_1f1b": "warm-up 前向 → steady 1F1B 单元 → cool-down 反向；只生成标签字符串，不跑真实 backward。",
 }
 
 STEP_NOTES: dict[str, str] = {
@@ -272,4 +277,14 @@ STEP_NOTES: dict[str, str] = {
     "tensor_parallel.run_tensor_parallel.column": "打印 `shard out` 与 `max abs diff vs dense`；应对齐到约 0。",
     "tensor_parallel.run_tensor_parallel.row": "打印 `shard in` 与 diff；应对齐到约 0。",
     "tensor_parallel.run_tensor_parallel.mlp": "dense MLP 与 TP MLP 并排；diff ≈ 0 证明列→激活→行可组合。",
+    "pipeline_parallel.send_activation.handoff": "`activation.contiguous()` → 同名；P2P 的教学替身。",
+    "pipeline_parallel.recv_activation.handoff": "与 send 对称的 identity recv。",
+    "pipeline_parallel.split_microbatches.split": "`x.chunk(n, dim=0)` → `x.chunk(n, 0)`。",
+    "pipeline_parallel.join_microbatches.join": "`torch.cat` ↔ `torch::cat`。",
+    "pipeline_parallel.schedule_1f1b.build": "用 f-string / `std::format` 生成 `F mb{{i}} stage{{j}}` 事件名。",
+    "pipeline_parallel.max_abs_diff.diff": "`.item()` → `.item<double>()`。",
+    "pipeline_parallel.run_pipeline_parallel.init": "同种子 `randn`；4 个 Linear 权重按 `[0:2]` / `[2:4]` 分给两个 stage。",
+    "pipeline_parallel.run_pipeline_parallel.sequential": "整 batch 一次交接；`max abs diff vs dense` ≈ 0。",
+    "pipeline_parallel.run_pipeline_parallel.microbatch": "micro-batch 前向与 dense 对齐。",
+    "pipeline_parallel.run_pipeline_parallel.schedule": "打印 1F1B 事件列表，两边逐行相同。",
 }
