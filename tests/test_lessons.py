@@ -26,6 +26,7 @@ LESSONS = [
     "crossload",
     "remap",
     "distributed",
+    "tensor_parallel",
 ]
 
 needs_cpp = pytest.mark.skipif(not CPP_CLI.exists(), reason="C++ side not built")

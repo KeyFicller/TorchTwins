@@ -73,6 +73,8 @@ class StdoutSilence {
   }
   StdoutSilence(const StdoutSilence&) = delete;
   StdoutSilence& operator=(const StdoutSilence&) = delete;
+  StdoutSilence(StdoutSilence&&) = delete;
+  StdoutSilence& operator=(StdoutSilence&&) = delete;
 
  private:
   int saved_{-1};
@@ -189,6 +191,7 @@ std::pair<torch::Tensor, torch::Tensor> shard(const torch::Tensor& x, const torc
 }
 
 // @twin allreduce_avg_
+// NOLINTNEXTLINE(readability-identifier-naming) — trailing _ matches PyTorch in-place twin
 void allreduce_avg_(c10d::Backend& pg, torch::Tensor& tensor) {
   // @step avg
   // SUM allreduce then divide — matches DDP's gradient averaging and Python's helper.

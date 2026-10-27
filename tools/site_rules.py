@@ -275,4 +275,29 @@ RULES: tuple[ApiRule, ...] = (
         r"\.allreduce\(",
         "手写梯度同步：allreduce(SUM) 再 /= world_size，等价于 DDP 的梯度平均",
     ),
+    # --- tensor parallel ---
+    _rule(
+        "functional_linear",
+        "py",
+        r"\bF\.linear\(",
+        "第 12 课：无状态线性；分片权重直接喂给 F.linear。C++ 是 F::linear（torch::nn::functional）",
+    ),
+    _rule(
+        "functional_linear",
+        "cpp",
+        r"\bF::linear\(",
+        "torch::nn::functional::linear；本课用命名空间别名 F，对应 Python torch.nn.functional as F",
+    ),
+    _rule(
+        "stack_sum",
+        "py",
+        r"torch\.stack\(",
+        "教学版 all-reduce：先 stack 再 sum；真分布式会走 ProcessGroup allreduce",
+    ),
+    _rule(
+        "stack_sum",
+        "cpp",
+        r"torch::stack\(",
+        "教学版 all-reduce：torch::stack 再 .sum(0)；真分布式会走 ProcessGroupGloo::allreduce",
+    ),
 )

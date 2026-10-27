@@ -21,6 +21,7 @@ from torchtwins.finetune import run_finetune
 from torchtwins.gpt import run_gpt
 from torchtwins.modules import run_modules
 from torchtwins.remap import run_remap
+from torchtwins.tensor_parallel import run_tensor_parallel
 from torchtwins.tensors import run_tensors
 from torchtwins.tokenizer import Tokenizer
 from torchtwins.train import run_train
@@ -38,6 +39,7 @@ LESSONS: dict[str, tuple[str, Callable[[Preset], None]]] = {
     "crossload": ("09 portable pickle bridge across runtimes", run_crossload),
     "remap": ("10 HF/OpenAI GPT-2 key remap (Conv1D, c_attn)", run_remap),
     "distributed": ("11 gloo DDP vs manual allreduce grads", run_distributed),
+    "tensor_parallel": ("12 column/row-parallel Linear shard math", run_tensor_parallel),
 }
 
 
