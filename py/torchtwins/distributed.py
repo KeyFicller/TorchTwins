@@ -4,16 +4,33 @@ from __future__ import annotations
 
 import os
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, cast
 
 import torch
 import torch.distributed as dist
-import torch.multiprocessing as mp
+import torch.multiprocessing as torch_mp
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel
 
 from torchtwins import report
 from torchtwins.config import Preset
+
+# torch stubs omit multiprocessing.spawn; cast keeps mypy --strict happy.
+_SpawnFn = Callable[..., None]
+_mp_spawn_impl = cast(_SpawnFn, torch_mp.spawn)  # type: ignore[attr-defined]
+
+
+def _mp_spawn(
+    fn: Callable[..., None],
+    *,
+    args: tuple[Any, ...],
+    nprocs: int,
+    join: bool = True,
+) -> None:
+    _mp_spawn_impl(fn, args=args, nprocs=nprocs, join=join)
+
 
 # Tiny, deterministic demo: 4 samples / 2 ranks, few SGD steps. Not the GPT preset.
 WORLD_SIZE = 2
@@ -121,7 +138,7 @@ def train_ddp_rank(
 
 
 def _ddp_worker(rank: int, world_size: int, seed: int, store_file: str) -> None:
-    """mp.spawn entry: only rank 0 prints into the shared transcript."""
+    """spawn entry: only rank 0 prints into the shared transcript."""
     result = train_ddp_rank(rank, world_size, seed, store_file)
     if result is None:
         return
@@ -158,7 +175,7 @@ def run_distributed(preset: Preset) -> None:
     os.close(fd)
     os.unlink(store_file)  # FileStore wants a path that does not exist yet
     try:
-        mp.spawn(
+        _mp_spawn(
             _ddp_worker,
             args=(WORLD_SIZE, preset.seed, store_file),
             nprocs=WORLD_SIZE,
