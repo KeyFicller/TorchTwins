@@ -43,6 +43,7 @@ set(TORCHTWINS_SOURCES
     torchtwins/crossload.cpp
     torchtwins/remap.cpp
     torchtwins/distributed.cpp
+    torchtwins/tensor_parallel.cpp
 )
 
 add_library(torchtwins_lib STATIC ${TORCHTWINS_SOURCES})
@@ -62,7 +63,7 @@ add_executable(torchtwins torchtwins/main.cpp)
 target_link_libraries(torchtwins PRIVATE torchtwins_lib)
 set_target_properties(torchtwins PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-foreach(lesson tensors autograd modules attention gpt data train finetune checkpoint crossload remap distributed)
+foreach(lesson tensors autograd modules attention gpt data train finetune checkpoint crossload remap distributed tensor_parallel)
   add_test(NAME ${lesson} COMMAND torchtwins ${lesson})
 endforeach()
 add_test(NAME unknown_lesson COMMAND torchtwins no_such_lesson)

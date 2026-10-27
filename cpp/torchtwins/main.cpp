@@ -12,6 +12,7 @@
 #include "torchtwins/gpt.h"
 #include "torchtwins/modules.h"
 #include "torchtwins/remap.h"
+#include "torchtwins/tensor_parallel.h"
 #include "torchtwins/tensors.h"
 #include "torchtwins/tokenizer.h"
 #include "torchtwins/train.h"
@@ -35,7 +36,7 @@ struct Lesson {
   std::function<void(const torchtwins::Preset&)> run;
 };
 
-const std::array<Lesson, 12> kLessons = {{
+const std::array<Lesson, 13> kLessons = {{
     {.name = "tensors",
      .description = "01 creation, shapes, indexing, broadcasting",
      .run = torchtwins::run_tensors},
@@ -72,6 +73,9 @@ const std::array<Lesson, 12> kLessons = {{
     {.name = "distributed",
      .description = "11 gloo DDP vs manual allreduce grads",
      .run = torchtwins::run_distributed},
+    {.name = "tensor_parallel",
+     .description = "12 column/row-parallel Linear shard math",
+     .run = torchtwins::run_tensor_parallel},
 }};
 
 void tokenize_file(const std::string& path) {

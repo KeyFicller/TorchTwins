@@ -24,6 +24,7 @@ LESSON_TITLES: dict[str, tuple[str, str]] = {
     "crossload": ("09", "跨运行时：便携 (names, tensors) pickle 桥"),
     "remap": ("10", "HF/OpenAI：Conv1D、c_attn、绑定 lm_head、键/形/dtype 审计"),
     "distributed": ("11", "分布式：gloo 进程组、DDP 与手写 allreduce"),
+    "tensor_parallel": ("12", "张量并行：列/行并行 Linear 分片数学"),
 }
 
 NOTES: dict[str, str] = {
@@ -70,6 +71,12 @@ NOTES: dict[str, str] = {
     "distributed.run_distributed": "先跑单进程基线，再拉起 2 个 CPU rank（gloo + FileStore）。两边 transcript 逐行相同：有效 batch、步数、最终权重一致。Python 用 <code>DistributedDataParallel</code> 包一层；C++ 没有同名包装，backward 之后对手写 <code>ProcessGroupGloo::allreduce</code> 求平均——数学上就是 DDP 在做的事。",
     "distributed.train_ddp_rank": "每 rank 只看自己的数据分片；loss 先 allreduce 再打印，所以和单进程全 batch 的 mean loss 对齐。",
     "distributed.allreduce_avg_": "SUM 再除以 world_size。Python 走 <code>torch.distributed</code> 全局进程组；C++ 显式传入 <code>c10d::Backend</code>。",
+    "tensor_parallel.run_tensor_parallel": "单进程演示 Megatron 风格的列并行 / 行并行：用 <code>cat</code> 模拟 all-gather、<code>sum</code> 模拟 all-reduce，不拉真实进程组（第 11 课已练过 gloo）。两边同种子权重，TP 输出与 dense Linear / MLP 的 max abs diff ≈ 0。",
+    "tensor_parallel.column_parallel_linear": "按 out 维切权重；每「rank」对完整输入做局部 <code>F.linear</code>，再沿特征维 gather。Python bias 可为 <code>None</code>；C++ 本课 demo 始终传入 bias 张量。",
+    "tensor_parallel.row_parallel_linear": "按 in 维切权重，输入也按最后一维切开；局部 matmul 后 SUM reduce，bias 在 reduce 之后加一次（Megatron 约定）。",
+    "tensor_parallel.all_gather_cat": "集合通信的教学替身：<code>torch.cat</code> ↔ <code>torch::cat</code>。",
+    "tensor_parallel.all_reduce_sum": "集合通信的教学替身：<code>stack</code> 再 <code>sum</code>。",
+    "tensor_parallel.tp_mlp": "列并行升维 → GELU → 行并行降维，对齐 dense MLP。",
 }
 
 STEP_NOTES: dict[str, str] = {
@@ -252,4 +259,17 @@ STEP_NOTES: dict[str, str] = {
     "remap.run_remap.strict": "故意丢掉 `tok_emb.weight` / 塞进 `not.a.real.param`；`apply_state` 必须拒绝，输出 `missing rejects` / `unexpected rejects`。",
     "remap.run_remap.shapes": "键齐全但把 `tok_emb.weight` 改成错误 leading dim；必须拒绝，且 `pos_emb` probe 差值 ≈ 0（证明预检先于 copy_）。",
     "remap.run_remap.dtypes": "键和形都对，但把 `tok_emb.weight` 转成 float16；必须拒绝，且 `pos_emb` probe 差值 ≈ 0（`copy_` 不会静默转型）。",
+    "tensor_parallel.column_weight_shard.slice": "`weight[start:start+rows]` → `weight.slice(0, start, start+rows).contiguous()`。",
+    "tensor_parallel.row_weight_shard.slice": "`weight[:, start:start+cols]` → `weight.slice(1, start, start+cols)`。",
+    "tensor_parallel.input_feature_shard.slice": "`x[..., start:start+cols]` → `x.slice(-1, start, start+cols)`。",
+    "tensor_parallel.all_gather_cat.gather": "`torch.cat(pieces, dim=-1)` → `torch::cat(pieces, -1)`。",
+    "tensor_parallel.all_reduce_sum.reduce": "`torch.stack(...).sum(0)` → `torch::stack(...).sum(0)`。",
+    "tensor_parallel.column_parallel_linear.shards": "`F.linear` ↔ `F::linear`；循环 world_size 个分片。",
+    "tensor_parallel.row_parallel_linear.bias": "reduce 之后再加完整 bias；局部 forward 不带 bias。",
+    "tensor_parallel.tp_mlp.act": "`GELU()(h)` → `GELU()(h)`（TORCH_MODULE 句柄同样可调用）。",
+    "tensor_parallel.max_abs_diff.diff": "`.item()` → `.item<double>()`。",
+    "tensor_parallel.run_tensor_parallel.init": "`randn` 形状 `(B,T,in)` → `{B,T,in}`；同种子两边逐位相同。",
+    "tensor_parallel.run_tensor_parallel.column": "打印 `shard out` 与 `max abs diff vs dense`；应对齐到约 0。",
+    "tensor_parallel.run_tensor_parallel.row": "打印 `shard in` 与 diff；应对齐到约 0。",
+    "tensor_parallel.run_tensor_parallel.mlp": "dense MLP 与 TP MLP 并排；diff ≈ 0 证明列→激活→行可组合。",
 }
