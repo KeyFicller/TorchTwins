@@ -275,5 +275,4 @@ RULES: tuple[ApiRule, ...] = (
         r"\.allreduce\(",
         "手写梯度同步：allreduce(SUM) 再 /= world_size，等价于 DDP 的梯度平均",
     ),
-
 )
