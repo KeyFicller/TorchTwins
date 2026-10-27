@@ -16,6 +16,7 @@ from torchtwins.checkpoint import run_checkpoint
 from torchtwins.config import Preset, load_preset
 from torchtwins.crossload import run_crossload
 from torchtwins.data import run_data
+from torchtwins.distributed import run_distributed
 from torchtwins.finetune import run_finetune
 from torchtwins.gpt import run_gpt
 from torchtwins.modules import run_modules
@@ -36,6 +37,7 @@ LESSONS: dict[str, tuple[str, Callable[[Preset], None]]] = {
     "checkpoint": ("08 save/load weights, restore logits", run_checkpoint),
     "crossload": ("09 portable pickle bridge across runtimes", run_crossload),
     "remap": ("10 HF/OpenAI GPT-2 key remap (Conv1D, c_attn)", run_remap),
+    "distributed": ("11 gloo DDP vs manual allreduce grads", run_distributed),
 }
 
 

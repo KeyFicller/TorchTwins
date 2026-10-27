@@ -250,4 +250,29 @@ RULES: tuple[ApiRule, ...] = (
         r"\.chunk\(",
         "把融合的 `c_attn` 拆成 Q|K|V；返回 std::vector<Tensor>",
     ),
+    # --- distributed ---
+    _rule(
+        "ddp",
+        "py",
+        r"\bDistributedDataParallel\b",
+        "Python 用 DDP 包装模块：backward 后自动 allreduce 梯度；C++ 课里没有同名类，需手写 ProcessGroupGloo::allreduce",
+    ),
+    _rule(
+        "process_group",
+        "py",
+        r"init_process_group\(",
+        "Python：dist.init_process_group(backend, init_method, rank, world_size)；本课用 gloo + file:// FileStore",
+    ),
+    _rule(
+        "process_group",
+        "cpp",
+        r"\bProcessGroupGloo\b",
+        "C++：c10d::ProcessGroupGloo(store, rank, size, options)；FileStore 做 rendezvous，createDefaultDevice() 绑 loopback",
+    ),
+    _rule(
+        "allreduce",
+        "cpp",
+        r"\.allreduce\(",
+        "手写梯度同步：allreduce(SUM) 再 /= world_size，等价于 DDP 的梯度平均",
+    ),
 )

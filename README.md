@@ -25,6 +25,7 @@ API 差异高亮并附解释；结果页的表格和图表全部读自 `docs/res
 | 08 | `checkpoint` | 保存 / 装回权重，logits 复原 | `torch.save(state_dict)` ↔ `torch::save(model)`（文件格式不互通） |
 | 09 | `crossload` | 便携 `(names, tensors)` pickle，跨运行时可互通 | `torch.save((names, tensors))` ↔ `torch::pickle_save` / `pickle_load` |
 | 10 | `remap` | HF/OpenAI GPT-2 键名重映射（合成张量） | Conv1D `.t()` vs reshape、`c_attn` 拆分、绑定 `lm_head`↔`wte`（untied/tied 前向对照 + omit 回退）、OpenAI 无前缀、缺键/多余键严格拒绝、形状/dtype 不符预检拒绝 |
+| 11 | `distributed` | gloo 双进程：单进程基线 vs DDP/手写 allreduce，loss 与权重对齐 | `DistributedDataParallel` ↔ `ProcessGroupGloo` + 手写 `allreduce` |
 
 另有三个基础设施"双胞胎"：`config`（共享 `configs/presets.json`）、`tokenizer`（离线 GPT-2 BPE）、`report`（统一输出格式）。
 
@@ -50,7 +51,10 @@ tools/fetch_libtorch.sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build build -j
 ./build/bin/torchtwins tensors     # 和 python -m torchtwins tensors 输出逐行相同
+./build/bin/torchtwins distributed  # 11：gloo 双进程，与 python -m torchtwins distributed 逐行相同
 ```
+
+第 11 课链接 `ProcessGroupGloo`，需要 gloo 头文件。CMake 会优先用 `vendor/gloo/`（可自行 clone），否则 `FetchContent` 拉取；LibTorch 已自带 `libgloo`，不必再编 gloo 本体。
 
 ### 跑一遍全部门禁
 

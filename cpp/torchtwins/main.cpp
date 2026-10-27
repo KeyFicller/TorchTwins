@@ -7,6 +7,7 @@
 #include "torchtwins/config.h"
 #include "torchtwins/crossload.h"
 #include "torchtwins/data.h"
+#include "torchtwins/distributed.h"
 #include "torchtwins/finetune.h"
 #include "torchtwins/gpt.h"
 #include "torchtwins/modules.h"
@@ -34,7 +35,7 @@ struct Lesson {
   std::function<void(const torchtwins::Preset&)> run;
 };
 
-const std::array<Lesson, 11> kLessons = {{
+const std::array<Lesson, 12> kLessons = {{
     {.name = "tensors",
      .description = "01 creation, shapes, indexing, broadcasting",
      .run = torchtwins::run_tensors},
@@ -68,6 +69,9 @@ const std::array<Lesson, 11> kLessons = {{
     {.name = "remap",
      .description = "10 HF/OpenAI GPT-2 key remap (Conv1D, c_attn)",
      .run = torchtwins::run_remap},
+    {.name = "distributed",
+     .description = "11 gloo DDP vs manual allreduce grads",
+     .run = torchtwins::run_distributed},
 }};
 
 void tokenize_file(const std::string& path) {
