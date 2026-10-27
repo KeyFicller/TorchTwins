@@ -56,6 +56,7 @@ RUNNABLE = [
     "checkpoint",
     "crossload",
     "remap",
+    "distributed",
 ]
 
 

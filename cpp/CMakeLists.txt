@@ -10,6 +10,23 @@ if(NOT Torch_FOUND)
     "    points at an existing install instead")
 endif()
 
+# LibTorch ships libgloo but not gloo/*.h; ProcessGroupGloo.hpp needs them.
+set(GLOO_HEADERS_PATH "${CMAKE_SOURCE_DIR}/vendor/gloo" CACHE PATH "Path to gloo sources (for headers)")
+if(NOT EXISTS "${GLOO_HEADERS_PATH}/gloo/algorithm.h")
+  include(FetchContent)
+  FetchContent_Declare(
+      gloo_headers
+      GIT_REPOSITORY https://github.com/facebookincubator/gloo.git
+      GIT_TAG main
+      GIT_SHALLOW TRUE
+  )
+  FetchContent_GetProperties(gloo_headers)
+  if(NOT gloo_headers_POPULATED)
+    FetchContent_Populate(gloo_headers)
+  endif()
+  set(GLOO_HEADERS_PATH "${gloo_headers_SOURCE_DIR}")
+endif()
+
 set(TORCHTWINS_SOURCES
     torchtwins/report.cpp
     torchtwins/config.cpp
@@ -25,11 +42,13 @@ set(TORCHTWINS_SOURCES
     torchtwins/checkpoint.cpp
     torchtwins/crossload.cpp
     torchtwins/remap.cpp
+    torchtwins/distributed.cpp
 )
 
 add_library(torchtwins_lib STATIC ${TORCHTWINS_SOURCES})
 # Headers are included as "torchtwins/<name>.h", same as the Python import path.
 target_include_directories(torchtwins_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(torchtwins_lib SYSTEM PRIVATE ${GLOO_HEADERS_PATH})
 target_include_directories(torchtwins_lib SYSTEM PRIVATE
     ${meta_pytorch_tokenizers_SOURCE_DIR}/third-party/json/single_include)
 target_compile_definitions(torchtwins_lib PUBLIC TORCHTWINS_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
@@ -43,7 +62,7 @@ add_executable(torchtwins torchtwins/main.cpp)
 target_link_libraries(torchtwins PRIVATE torchtwins_lib)
 set_target_properties(torchtwins PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-foreach(lesson tensors autograd modules attention gpt data train finetune checkpoint crossload remap)
+foreach(lesson tensors autograd modules attention gpt data train finetune checkpoint crossload remap distributed)
   add_test(NAME ${lesson} COMMAND torchtwins ${lesson})
 endforeach()
 add_test(NAME unknown_lesson COMMAND torchtwins no_such_lesson)

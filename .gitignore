@@ -25,3 +25,4 @@ vendor/libtorch/
 
 # Generated comparison site (python tools/build_site.py; Pages builds it on deploy)
 docs/site/
+vendor/gloo/

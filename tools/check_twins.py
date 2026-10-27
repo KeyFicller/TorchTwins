@@ -44,6 +44,7 @@ LESSONS = (
     "checkpoint",
     "crossload",
     "remap",
+    "distributed",
 )
 # Entry points have no block-level twin: they differ by nature (argparse vs argv).
 UNPAIRED = {"__init__", "__main__"}

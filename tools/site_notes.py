@@ -23,6 +23,7 @@ LESSON_TITLES: dict[str, tuple[str, str]] = {
     "checkpoint": ("08", "检查点：保存权重、装回新模型、logits 复原"),
     "crossload": ("09", "跨运行时：便携 (names, tensors) pickle 桥"),
     "remap": ("10", "HF/OpenAI：Conv1D、c_attn、绑定 lm_head、键/形/dtype 审计"),
+    "distributed": ("11", "分布式：gloo 进程组、DDP 与手写 allreduce"),
 }
 
 NOTES: dict[str, str] = {
@@ -66,6 +67,9 @@ NOTES: dict[str, str] = {
     "remap.apply_state": "先 `audit_keys`，再 `audit_shapes`，再 `audit_dtypes`；任一失败立刻抛错（fail closed），绝不部分 `copy_`。",
     "remap.max_abs_diff": "逐元素最大绝对差；往返成功时应 ≈ 0，reshape 陷阱应明显大于 0。",
     "remap.run_remap": "tiny 预设默认 `qkv_bias=False`，本课强制 `True`。流程：HF 往返 → reshape 陷阱 → 装回 → 缺键/多余键严格拒绝 → 故意改形再拒绝（probe 不变）→ 故意改 dtype 再拒绝（probe 不变）→ tie（untied vs tied 前向对照 + resolve omit 回退）→ OpenAI 无前缀再往返。",
+    "distributed.run_distributed": "先跑单进程基线，再拉起 2 个 CPU rank（gloo + FileStore）。两边 transcript 逐行相同：有效 batch、步数、最终权重一致。Python 用 <code>DistributedDataParallel</code> 包一层；C++ 没有同名包装，backward 之后对手写 <code>ProcessGroupGloo::allreduce</code> 求平均——数学上就是 DDP 在做的事。",
+    "distributed.train_ddp_rank": "每 rank 只看自己的数据分片；loss 先 allreduce 再打印，所以和单进程全 batch 的 mean loss 对齐。",
+    "distributed.allreduce_avg_": "SUM 再除以 world_size。Python 走 <code>torch.distributed</code> 全局进程组；C++ 显式传入 <code>c10d::Backend</code>。",
 }
 
 STEP_NOTES: dict[str, str] = {
